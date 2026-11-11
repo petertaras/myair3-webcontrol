@@ -2,6 +2,12 @@
 
 A small local web app to control an Advantage Air MyAir3 (Series 3) ducted air conditioner from a browser, after the MyAir3 iOS app stopped finding the system on my home network.
 
+<p>
+  <img src="docs/screenshot-mobile.png" alt="MyAir3 WebControl on a phone" width="300">
+  &nbsp;
+  <img src="docs/screenshot-desktop.png" alt="MyAir3 WebControl on a desktop browser" width="520">
+</p>
+
 ## Why this exists
 
 The wall panel and the air conditioner still worked. The iOS app used to work too, then it stopped finding the system. I tried the usual things without success: iOS Local Network permission on, VPN off, reinstalling the app, and the router Wi-Fi and multicast settings. The controller itself answered fine from Safari over its plain HTTP API, so the controller was still reachable and answering requests.
