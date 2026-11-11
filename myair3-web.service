@@ -1,0 +1,22 @@
+# Example systemd user unit. Copy to ~/.config/systemd/user/myair3-web.service,
+# adjust ExecStart and the Environment= lines, then:
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now myair3-web
+#   loginctl enable-linger $USER     # start at boot without a login
+[Unit]
+Description=MyAir3 WebControl (local web UI for an Advantage Air MyAir3 controller)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/bin/python3 %h/myair3-webcontrol/myair3_web.py
+Environment=MYAIR3_HOST=192.168.1.50
+Environment=MYAIR3_PORT=8088
+Environment=MYAIR3_ALLOW=192.168.1.0/24,127.0.0.0/8
+Restart=always
+RestartSec=5
+NoNewPrivileges=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=default.target

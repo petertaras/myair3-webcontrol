@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MyAir3">
+<meta name="theme-color" content="#0b2540">
+<link rel="apple-touch-icon" href="/static/icon.png">
+<link rel="icon" type="image/svg+xml" href="/static/icon.svg">
+<title>MyAir3 WebControl</title>
+<style>
+  :root {
+    --bg-top: #174a7c; --bg-bot: #0b2540;
+    --card: rgba(255,255,255,.06); --card-edge: rgba(255,255,255,.10);
+    --text: #f2f8ff; --muted: rgba(226,240,255,.62);
+    --cyan: #47ceea; --cyan-2: #1aa9cc; --glow: rgba(71,206,234,.45);
+    --idle: rgba(255,255,255,.07); --idle-edge: rgba(255,255,255,.12);
+    --warn: #ffd84d; --danger: #ff7a7a;
+    --r: 18px;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { background: var(--bg-bot); }
+  body { margin: 0; min-height: 100vh; color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    background: radial-gradient(120% 60% at 50% 0%, var(--bg-top) 0%, var(--bg-bot) 70%) fixed;
+    padding: max(14px, env(safe-area-inset-top)) 14px max(20px, env(safe-area-inset-bottom)); }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  svg.i { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2;
+    stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 4px 2px 16px; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand img { width: 34px; height: 34px; border-radius: 9px; box-shadow: 0 4px 14px rgba(0,0,0,.35); }
+  .brand b { font-size: 19px; letter-spacing: .2px; }
+  .brand span { font-weight: 300; color: var(--muted); }
+  .status { font-size: 12px; color: var(--muted); text-align: right; display: flex; align-items: center; gap: 6px; }
+  .status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #5fe3a1;
+    box-shadow: 0 0 8px #5fe3a1; }
+  .status.err { color: var(--warn); }
+  .status.err::before { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+
+  .grid { display: grid; gap: 14px; grid-template-columns: 1fr; }
+  @media (min-width: 760px) { .grid { grid-template-columns: 1fr 1fr; } }
+  .card { background: var(--card); border: 1px solid var(--card-edge); border-radius: var(--r);
+    padding: 14px; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 10px 30px rgba(0,0,0,.18); }
+  .card h2 { margin: 0 0 12px; font-size: 12px; font-weight: 600; letter-spacing: 1.2px;
+    text-transform: uppercase; color: var(--muted); display: flex; justify-content: space-between; }
+  .card h2 em { font-style: normal; text-transform: none; letter-spacing: 0; color: var(--text); opacity: .8; }
+
+  /* segmented buttons */
+  .seg { display: grid; gap: 8px; grid-template-columns: repeat(4, 1fr); }
+  .opt { appearance: none; border: 1px solid var(--idle-edge); background: var(--idle); color: var(--text);
+    border-radius: 14px; min-height: 64px; padding: 8px 4px; font: inherit; font-size: 13px; font-weight: 600;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+    cursor: pointer; transition: background .2s, box-shadow .2s, transform .1s; }
+  .opt:active { transform: scale(.97); }
+  .opt.on { background: linear-gradient(160deg, var(--cyan), var(--cyan-2)); border-color: transparent;
+    color: #04263b; box-shadow: 0 6px 18px var(--glow); }
+
+  /* power */
+  .power { display: flex; align-items: center; gap: 16px; }
+  .pwr { width: 84px; height: 84px; border-radius: 50%; border: 1px solid var(--idle-edge);
+    background: var(--idle); color: var(--muted); display: grid; place-items: center; cursor: pointer;
+    transition: all .25s; flex: none; }
+  .pwr svg.i { width: 36px; height: 36px; stroke-width: 2.4; }
+  .pwr.on { color: #04263b; border-color: transparent;
+    background: radial-gradient(circle at 35% 30%, #9cefff, var(--cyan) 45%, var(--cyan-2));
+    box-shadow: 0 0 0 6px rgba(71,206,234,.15), 0 0 28px var(--glow); }
+  .pwr:active { transform: scale(.96); }
+  .ptext b { display: block; font-size: 26px; }
+  .ptext small { color: var(--muted); font-size: 13px; }
+
+  /* temperature stepper */
+  .stepper { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .round { width: 56px; height: 56px; border-radius: 50%; border: 1px solid var(--idle-edge);
+    background: var(--idle); color: var(--text); display: grid; place-items: center; cursor: pointer; }
+  .round:active { background: rgba(71,206,234,.25); }
+  .round svg.i { width: 24px; height: 24px; stroke-width: 2.6; }
+  .tval { text-align: center; }
+  .tval b { font-size: 46px; font-weight: 300; letter-spacing: -1px; }
+  .tval b sup { font-size: 20px; font-weight: 400; vertical-align: top; position: relative; top: 10px; }
+  .tval small { display: block; color: var(--muted); font-size: 12px; margin-top: -2px; }
+
+  /* zones */
+  .zhead { display: flex; align-items: baseline; justify-content: space-between; margin: 24px 2px 10px; }
+  .zhead h1 { margin: 0; font-size: 20px; font-weight: 700; }
+  .zhead span { color: var(--muted); font-size: 13px; }
+  .zones { display: grid; gap: 10px; grid-template-columns: 1fr; }
+  @media (min-width: 640px) { .zones { grid-template-columns: 1fr 1fr; } }
+  .zone { display: flex; align-items: center; gap: 10px; padding: 10px 10px 10px 14px; border-radius: 16px;
+    background: var(--card); border: 1px solid var(--card-edge); position: relative; overflow: hidden;
+    transition: background .2s, border-color .2s; }
+  .zone::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+    background: transparent; transition: background .2s; }
+  .zone.open { background: rgba(71,206,234,.12); border-color: rgba(71,206,234,.35); }
+  .zone.open::before { background: var(--cyan); box-shadow: 0 0 10px var(--glow); }
+  .zname { flex: 1; min-width: 0; background: none; border: 0; color: inherit; text-align: left; cursor: pointer;
+    padding: 4px 0; font: inherit; display: flex; align-items: center; gap: 12px; }
+  .toggle { width: 42px; height: 24px; border-radius: 12px; background: rgba(255,255,255,.16);
+    position: relative; flex: none; transition: background .2s; }
+  .toggle::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px;
+    border-radius: 50%; background: #fff; transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.3); }
+  .zone.open .toggle { background: var(--cyan); }
+  .zone.open .toggle::after { transform: translateX(18px); }
+  .zlabel { min-width: 0; }
+  .zlabel span { display: block; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis; text-transform: capitalize; }
+  .zlabel small { display: flex; gap: 6px; margin-top: 3px; min-height: 16px; flex-wrap: wrap; }
+  .tag { font-size: 10px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; padding: 2px 7px;
+    border-radius: 999px; background: rgba(255,255,255,.12); color: var(--muted); }
+  .tag.const { background: rgba(71,206,234,.18); color: #9cefff; }
+  .tag.warn { background: rgba(255,216,77,.16); color: var(--warn); }
+  .tag.err { background: rgba(255,122,122,.18); color: var(--danger); }
+  .zctl { display: flex; align-items: center; gap: 6px; flex: none; }
+  .zctl .round { width: 38px; height: 38px; }
+  .zctl .round svg.i { width: 18px; height: 18px; }
+  .pct { width: 54px; text-align: center; font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .bar { position: absolute; left: 14px; right: 14px; bottom: 0; height: 2px; background: rgba(255,255,255,.06); }
+  .bar i { display: block; height: 100%; background: rgba(255,255,255,.25); transition: width .3s; }
+  .zone.open .bar i { background: var(--cyan); }
+
+  .busy { opacity: .75; pointer-events: none; }
+  footer { margin-top: 22px; font-size: 11px; color: var(--muted); text-align: center; opacity: .7; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-power" viewBox="0 0 24 24"><path d="M12 3v9"/><path d="M6.3 7.2a8 8 0 1 0 11.4 0"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-cool" viewBox="0 0 24 24"><path d="M12 2v20M4.5 6.5l15 11M19.5 6.5l-15 11"/><path d="M9 3.5l3 2.5 3-2.5M9 20.5l3-2.5 3 2.5"/></symbol>
+  <symbol id="i-heat" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="i-fan" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.6"/><path d="M12 10.4c0-4 1-7 3.5-7s3 3.4-3.5 7zM13.6 12c4 0 7 1 7 3.5s-3.4 3-7-3.5zM12 13.6c0 4-1 7-3.5 7s-3-3.4 3.5-7zM10.4 12c-4 0-7-1-7-3.5s3.4-3 7 3.5z"/></symbol>
+  <symbol id="i-dry" viewBox="0 0 24 24"><path d="M12 3s6 6.4 6 11a6 6 0 0 1-12 0c0-4.6 6-11 6-11z"/></symbol>
+  <symbol id="i-f1" viewBox="0 0 24 24"><path d="M5 18v-3"/><path d="M10 18v-6" opacity=".3"/><path d="M15 18v-9" opacity=".3"/><path d="M20 18V6" opacity=".3"/></symbol>
+  <symbol id="i-f2" viewBox="0 0 24 24"><path d="M5 18v-3M10 18v-6"/><path d="M15 18v-9" opacity=".3"/><path d="M20 18V6" opacity=".3"/></symbol>
+  <symbol id="i-f3" viewBox="0 0 24 24"><path d="M5 18v-3M10 18v-6M15 18v-9"/><path d="M20 18V6" opacity=".3"/></symbol>
+  <symbol id="i-auto" viewBox="0 0 24 24"><path d="M4 18l5.5-12h1L16 18"/><path d="M6.3 13h7.4"/><path d="M18 4l.7 1.6 1.6.7-1.6.7L18 8.6l-.7-1.6-1.6-.7 1.6-.7z"/></symbol>
+</svg>
+
+<div class="wrap">
+  <header>
+    <div class="brand"><img src="/static/icon.svg" alt=""><b>MyAir3 <span>WebControl</span></b></div>
+    <div class="status" id="status">Connecting…</div>
+  </header>
+
+  <section class="grid">
+    <div class="card">
+      <h2>Air-con</h2>
+      <div class="power">
+        <div class="pwr" id="pwr" role="button" aria-label="Power"><svg class="i"><use href="#i-power"/></svg></div>
+        <div class="ptext"><b id="pState">--</b><small id="pSub">&nbsp;</small></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Target temperature <em id="actual"></em></h2>
+      <div class="stepper">
+        <button class="round" id="tMinus" aria-label="Lower"><svg class="i"><use href="#i-minus"/></svg></button>
+        <div class="tval"><b id="tVal">--<sup>°C</sup></b><small id="tRange"></small></div>
+        <button class="round" id="tPlus" aria-label="Raise"><svg class="i"><use href="#i-plus"/></svg></button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Mode</h2>
+      <div class="seg" id="modes">
+        <button class="opt" data-mode="1"><svg class="i"><use href="#i-cool"/></svg>Cool</button>
+        <button class="opt" data-mode="2"><svg class="i"><use href="#i-heat"/></svg>Heat</button>
+        <button class="opt" data-mode="3"><svg class="i"><use href="#i-fan"/></svg>Fan</button>
+        <button class="opt" data-mode="5"><svg class="i"><use href="#i-dry"/></svg>Dry</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Fan speed</h2>
+      <div class="seg" id="fans">
+        <button class="opt" data-fan="1"><svg class="i"><use href="#i-f1"/></svg>Low</button>
+        <button class="opt" data-fan="2"><svg class="i"><use href="#i-f2"/></svg>Medium</button>
+        <button class="opt" data-fan="3"><svg class="i"><use href="#i-f3"/></svg>High</button>
+        <button class="opt" data-fan="4"><svg class="i"><use href="#i-auto"/></svg>Auto</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="zhead"><h1>Zones</h1><span id="zoneNote"></span></div>
+  <section class="zones" id="zones"></section>
+
+  <footer id="foot">MyAir3 WebControl · local network only</footer>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+let S = null;
+let pendingTemp = null, tempTimer = null;
+const pendingPct = {}, pctTimers = {};
+const MODE_NAMES = { 1: 'Cooling', 2: 'Heating', 3: 'Fan only', 5: 'Dry' };
+
+function setStatus(t, err) { const e = $('#status'); e.textContent = t; e.className = 'status' + (err ? ' err' : ''); }
+
+async function api(path, body) {
+  const r = await fetch(path, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body) } : { cache: 'no-store' });
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || r.status);
+  return j;
+}
+
+async function refresh() {
+  try { S = await api('/api/state'); render(); setStatus('Updated ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })); }
+  catch (e) { setStatus('Controller unreachable', true); }
+}
+
+async function send(path, body) {
+  document.body.classList.add('busy');
+  try { S = await api(path, body); render(); setStatus('Saved'); }
+  catch (e) { setStatus('Failed: ' + e.message, true); refresh(); }
+  finally { document.body.classList.remove('busy'); }
+}
+
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+
+function render() {
+  if (!S) return;
+  $('#pwr').classList.toggle('on', S.on);
+  $('#pState').textContent = S.on ? 'On' : 'Off';
+  $('#pSub').textContent = S.on ? (MODE_NAMES[S.mode] || '') : 'Tap to turn on';
+  document.querySelectorAll('#modes .opt').forEach(b => b.classList.toggle('on', +b.dataset.mode === S.mode));
+  document.querySelectorAll('#fans .opt').forEach(b => b.classList.toggle('on', +b.dataset.fan === S.fan));
+  const t = pendingTemp ?? S.desiredTemp;
+  $('#tVal').firstChild.textContent = t != null ? Math.round(t) : '--';
+  $('#actual').textContent = S.actualTemp ? 'Return air ' + S.actualTemp.toFixed(1) + '°' : '';
+  $('#tRange').textContent = Math.round(S.minTemp) + '–' + Math.round(S.maxTemp) + '°C';
+  if (S.error) setStatus('Air-con error ' + S.error, true);
+  $('#zoneNote').textContent = S.zones.filter(z => z.open).length + ' of ' + S.zones.length + ' open';
+
+  const box = $('#zones');
+  if (box.children.length !== S.zones.length) {
+    box.replaceChildren(...S.zones.map(z => zoneEl(z.zone)));
+  }
+  S.zones.forEach(z => {
+    const e = box.children[z.zone - 1];
+    e.classList.toggle('open', z.open);
+    e.querySelector('.zlabel span').textContent = (z.name || ('Zone ' + z.zone)).toLowerCase();
+    const p = pendingPct[z.zone] ?? z.percent;
+    e.querySelector('.pct').textContent = p + '%';
+    e.querySelector('.bar i').style.width = p + '%';
+    e.querySelector('.zctl').style.visibility = z.percentAvail ? 'visible' : 'hidden';
+    const tags = e.querySelector('.zlabel small');
+    tags.replaceChildren();
+    if (S.constantZones.includes(z.zone)) tags.append(el('span', 'tag const', 'Constant'));
+    if (z.lowBattery) tags.append(el('span', 'tag warn', 'Low battery'));
+    if (z.motorError) tags.append(el('span', 'tag err', 'Motor error'));
+  });
+}
+
+function icon(id) {
+  const ns = 'http://www.w3.org/2000/svg';
+  const s = document.createElementNS(ns, 'svg'); s.setAttribute('class', 'i');
+  const u = document.createElementNS(ns, 'use'); u.setAttribute('href', '#' + id); s.append(u); return s;
+}
+
+function zoneEl(n) {
+  const d = el('div', 'zone');
+  const name = el('button', 'zname'); name.setAttribute('aria-label', 'Open or close zone ' + n);
+  const lab = el('div', 'zlabel'); lab.append(el('span'), el('small'));
+  name.append(el('div', 'toggle'), lab);
+  const ctl = el('div', 'zctl');
+  const minus = el('button', 'round'); minus.append(icon('i-minus')); minus.dataset.d = -5; minus.setAttribute('aria-label', 'Less air');
+  const plus = el('button', 'round'); plus.append(icon('i-plus')); plus.dataset.d = 5; plus.setAttribute('aria-label', 'More air');
+  ctl.append(minus, el('div', 'pct', '--%'), plus);
+  const bar = el('div', 'bar'); bar.append(el('i'));
+  d.append(name, ctl, bar);
+
+  name.onclick = () => {
+    const z = S.zones[n - 1];
+    z.open = !z.open; render();
+    send('/api/zone', { zone: n, open: z.open });
+  };
+  [minus, plus].forEach(b => b.onclick = () => {
+    const z = S.zones[n - 1];
+    const cur = pendingPct[n] ?? z.percent;
+    const lo = Math.max(5, z.minDamper || 0), hi = Math.min(100, z.maxDamper || 100);
+    pendingPct[n] = Math.min(hi, Math.max(lo, cur + +b.dataset.d));
+    render();
+    clearTimeout(pctTimers[n]);
+    pctTimers[n] = setTimeout(async () => {
+      await send('/api/zone', { zone: n, percent: pendingPct[n] });
+      delete pendingPct[n]; render();
+    }, 700);
+  });
+  return d;
+}
+
+$('#pwr').onclick = () => S && send('/api/system', { on: !S.on });
+document.querySelectorAll('#modes .opt').forEach(b => b.onclick = () => send('/api/system', { mode: +b.dataset.mode }));
+document.querySelectorAll('#fans .opt').forEach(b => b.onclick = () => send('/api/system', { fan: +b.dataset.fan }));
+function bumpTemp(d) {
+  if (!S) return;
+  const cur = pendingTemp ?? Math.round(S.desiredTemp);
+  pendingTemp = Math.min(S.maxTemp, Math.max(S.minTemp, cur + d));
+  render();
+  clearTimeout(tempTimer);
+  tempTimer = setTimeout(async () => {
+    await send('/api/system', { desiredTemp: pendingTemp });
+    pendingTemp = null; render();
+  }, 700);
+}
+$('#tMinus').onclick = () => bumpTemp(-1);
+$('#tPlus').onclick = () => bumpTemp(1);
+
+refresh();
+setInterval(() => { if (!document.hidden && pendingTemp == null && !Object.keys(pendingPct).length) refresh(); }, 10000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+</script>
+</body>
+</html>
