@@ -76,11 +76,13 @@ The controller speaks plain HTTP on port 80 and answers with XML. After a succes
 | `getSystemData` | Read the current system state |
 | `getZoneData?zone=N` | Read one zone |
 | `setSystemData?airconOnOff=0\|1` | Turn the air conditioner off or on |
-| `setSystemData?mode=1\|2\|3\|5` | Set mode: 1 cool, 2 heat, 3 fan, 5 dry |
-| `setSystemData?fanSpeed=1\|2\|3\|4` | Set fan speed: 1 low, 2 medium, 3 high, 4 auto |
+| `setSystemData?mode=1\|2\|3` | Set mode: 1 cool, 2 heat, 3 fan (see note on Dry below) |
+| `setSystemData?fanSpeed=1\|2\|3` | Set fan speed: 1 low, 2 medium, 3 high (see note on Auto below) |
 | `setSystemData?centralDesiredTemp=N` | Set target temperature, between `minUserTemp` and `maxUserTemp`, usually 16 to 32 |
 | `setZoneData?zone=N&zoneSetting=0\|1` | Close or open a zone |
-| `setZoneData?zone=N&userPercentSetting=P` | Set zone airflow, 5 to 100 in steps of 5 |
+| `setZoneData?zone=N&userPercentSetting=P` | Set zone airflow, 10 to 100 in steps of 10 |
+
+**Dry mode and Auto fan.** The Android app code knows `mode=5` (dry) and `fanSpeed=4` (auto), but it hides both buttons when it runs as the MyAir3 app. The MyAir3 wall panel does not offer them either. On my system, when the unit is put into Dry from a simple button panel, the MyAir3 controller reports the system as off. So this web app only offers Cool, Heat and Fan, and Low, Medium and High.
 
 You do not need to use this API directly. The web app wraps it, validates the values, and logs in again on its own when the controller asks for it.
 

@@ -11,8 +11,8 @@ Controller API (from MyAir3 Android app 3.290):
   GET /getSystemData
   GET /getZoneData?zone=N
   GET /setSystemData?airconOnOff=0|1
-  GET /setSystemData?mode=1|2|3|5          (cool, heat, fan, dry)
-  GET /setSystemData?fanSpeed=1|2|3|4      (low, medium, high, auto)
+  GET /setSystemData?mode=1|2|3            (cool, heat, fan; 5 = dry exists but MyAir3 hides it)
+  GET /setSystemData?fanSpeed=1|2|3        (low, medium, high; 4 = auto, hidden on MyAir3)
   GET /setSystemData?centralDesiredTemp=N  (minUserTemp..maxUserTemp)
   GET /setZoneData?zone=N&zoneSetting=0|1
   GET /setZoneData?zone=N&userPercentSetting=P
@@ -44,8 +44,9 @@ CTYPES = {".png": "image/png", ".svg": "image/svg+xml"}
 STATIC = {p.name: (p.read_bytes(), CTYPES[p.suffix]) for p in (Path(__file__).parent / "static").iterdir()
           if p.suffix in CTYPES}
 
-MODES = {1: "cool", 2: "heat", 3: "fan", 5: "dry"}
-FANS = {1: "low", 2: "medium", 3: "high", 4: "auto"}
+# The official MyAir3 app hides Dry (mode 5) and Auto fan (4) for MyAir3 systems, so we do too.
+MODES = {1: "cool", 2: "heat", 3: "fan"}
+FANS = {1: "low", 2: "medium", 3: "high"}
 
 _lock = threading.Lock()  # the controller is old: one request at a time
 _zone_cache = {"t": 0.0, "n": 0, "zones": []}
@@ -157,8 +158,8 @@ def apply_zone(req, sysinfo):
         ctl(f"setZoneData?zone={z}&zoneSetting={1 if req['open'] else 0}")
     if "percent" in req:
         p = int(req["percent"])
-        if not 0 <= p <= 100 or p % 5:
-            raise ValueError("percent must be 0-100 in steps of 5")
+        if not 0 <= p <= 100 or p % 10:
+            raise ValueError("percent must be 0-100 in steps of 10")
         ctl(f"setZoneData?zone={z}&userPercentSetting={p}")
     _zone_cache["t"] = 0.0
 
